@@ -1,5 +1,12 @@
 #!/usr/bin/python3
 
+# Try to make a graph satisfy distance constrants (==,<=,>=)
+# among pairs of vertices, while keeping all vertices on a sphere
+# of some radius.
+
+# Author: Don Hatch
+# 2019/02/26
+
 import math
 import re
 import sys
@@ -17,18 +24,14 @@ def dist(v,w): return length(vmv(w,v))
 def relaxOnAnySizeSphere(verts,
                          edgeLengthConstraints,
                          nIters):
-  verboseLevel = 1  # set to 2 to show one '.' per iteration
-  if verboseLevel >= 1: sys.stderr.write("    in relaxOnAnySizeSphere\n")
-  if verboseLevel >= 1: sys.stderr.write("      initial verts = %r\n"%(verts,))
-  if verboseLevel >= 1: sys.stderr.write("      edgeLengthConstraints = %r\n"%(edgeLengthConstraints,))
-  if verboseLevel >= 1: sys.stderr.write("      nIters = %r\n"%(nIters,))
-  if verboseLevel >= 1: sys.stderr.write("      iterating... ")
-  if verboseLevel >= 1: sys.stderr.flush()
+  sys.stderr.write("    in relaxOnAnySizeSphere\n")
+  sys.stderr.write("      initial verts = %r\n"%(verts,))
+  sys.stderr.write("      edgeLengthConstraints = %r\n"%(edgeLengthConstraints,))
+  sys.stderr.write("      nIters = %r\n"%(nIters,))
+  sys.stderr.write("      iterating...\n")
 
   t0 = time.time()
   for iIter in range(nIters):
-    if verboseLevel >= 2: sys.stderr.write(".")
-    if verboseLevel >= 2: sys.stderr.flush()
     # Perturb verts to try to approach edge length constraints.
     # If a vertex is being pushed/pulled by multiple edges,
     # move it to the average of where they want it to go.
@@ -60,13 +63,12 @@ def relaxOnAnySizeSphere(verts,
     verts = [vxs(vert, avgRadius/radius) for vert,radius in zip(verts,radii)]
   t1 = time.time()
 
-  if verboseLevel >= 1: sys.stderr.write("\n")
-  if verboseLevel >= 1: sys.stderr.write("      did %r iterations in %.6f secs.\n"%(nIters, t1-t0))
-  if verboseLevel >= 1: sys.stderr.write("      final verts = %r\n"%(verts,))
-  if verboseLevel >= 1: sys.stderr.write("      final spring lengths with '==' constraints: %r\n"%([dist(verts[v0],verts[v1]) for v0,v1,relation,targetEdgeLength in edgeLengthConstraints if relation=="=="]))
-  if verboseLevel >= 1: sys.stderr.write("      final spring lengths with '>=' constraints: %r\n"%([dist(verts[v0],verts[v1]) for v0,v1,relation,targetEdgeLength in edgeLengthConstraints if relation==">="]))
-  if verboseLevel >= 1: sys.stderr.write("      final spring lengths with '<=' constraints: %r\n"%([dist(verts[v0],verts[v1]) for v0,v1,relation,targetEdgeLength in edgeLengthConstraints if relation=="<="]))
-  if verboseLevel >= 1: sys.stderr.write("      final radii = %r\n"%([length(vert) for vert in verts]))
+  sys.stderr.write("      did %r iterations in %.6f secs.\n"%(nIters, t1-t0))
+  sys.stderr.write("      final verts = %r\n"%(verts,))
+  sys.stderr.write("      final radii = %r\n"%([length(vert) for vert in verts]))
+  sys.stderr.write("      final spring lengths:\n")
+  for v0,v1,relation,targetEdgeLength in edgeLengthConstraints:
+    sys.stderr.write("          %r %r %s %r: %r\n"%(v0,v1,relation,targetEdgeLength,dist(verts[v0],verts[v1])))
   sys.stderr.write("    out relaxOnAnySizeSphere\n")
   return verts
 
@@ -76,7 +78,7 @@ def printSVG(verts, edges):
   sys.stderr.write("verts = %r\n"%(verts,))
   sys.stderr.write("edges = %r\n"%(edges,))
   print("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
-  print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"768pt\" height=\"128pt\" viewBox=\"0 0 768 128\" >")
+  print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"384pt\" height=\"128pt\" viewBox=\"0 0 384 128\" >")
 
   maxRadius = max(length(vert) for vert in verts)
   scale = 50/maxRadius  # can't put this as part of the xform, or it will thicken the lines
@@ -103,7 +105,7 @@ def printSVG(verts, edges):
 
 
 if len(sys.argv) != 2:
-  exit("Usage: relax.py <nIters> < input.txt > output.svg")
+  exit("Usage: python3 relax.py <nIters> < input.txt > output.svg")
 nIters = int(sys.argv[1])
 
 verts = []
