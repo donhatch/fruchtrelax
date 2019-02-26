@@ -24,7 +24,7 @@ def relaxOnAnySizeSphere(verts,
                          nIters):
   verboseLevel = 2  # manually set this to something higher to debug
   if verboseLevel >= 1: print("    in relaxOnAnySizeSphere")
-  if verboseLevel >= 1: print("      verts = %r"%(verts,))
+  if verboseLevel >= 1: print("      initial verts = %r"%(verts,))
   if verboseLevel >= 1: print("      edgeLengthConstraints = %r"%(edgeLengthConstraints,))
   if verboseLevel >= 1: print("      nIters = %r"%(nIters,))
 
@@ -89,24 +89,39 @@ def printSVG(verts, edges):
   sys.stderr.write("edges = %r\n"%(edges,))
   print("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
   #print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"256pt\" height=\"256pt\" viewBox=\"0 0 256 256\" transform=\"translate(128,128)\">")
-  print("<svg xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:cc=\"http://creativecommons.org/ns#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" width=\"256pt\" height=\"256pt\" viewBox=\"0 0 256 256\" >")
+  print("<svg xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:cc=\"http://creativecommons.org/ns#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" width=\"768pt\" height=\"256pt\" viewBox=\"0 0 768 256\" >")
+
+  maxRadius = max(length(vert) for vert in verts)
+  scale = 50/maxRadius  # can't put this as part of the xform, or it will thicken the lines
+  pointRadius = .02
+
   print(" <g style=\"fill:none;stroke:#000000\" transform=\"translate(128,128)\" >")
-  scale = 100  # can't put this as part of the xform, or it will thicken the lines
-  pointRadius = .01
   for x,y,z in verts:
     print("  <circle cx=\"%r\" cy=\"%r\" r=\"%r\" />"%(x*scale,-y*scale,pointRadius*scale))
   for v0,v1 in edges:
-    x0 = verts[v0][0]
-    y0 = verts[v0][1]
-    x1 = verts[v1][0]
-    y1 = verts[v1][1]
+    x0,y0,z0 = verts[v0]
+    x1,y1,z1 = verts[v1]
     print("  <path d=\"M %r,%r L %r,%r\" />"%(x0*scale,-y0*scale,x1*scale,-y1*scale))
-
-  if False:
-    # unit circle
-    print("  <circle style=\"fill:none;stroke:#000000\" cx=\"%r\" cy=\"%r\" r=\"%r\" />"%(0*scale,-0*scale,1*scale))
-
   print(" </g>")
+
+  print(" <g style=\"fill:none;stroke:#000000\" transform=\"translate(256,128)\" >")
+  for x,y,z in verts:
+    print("  <circle cx=\"%r\" cy=\"%r\" r=\"%r\" />"%(y*scale,-z*scale,pointRadius*scale))
+  for v0,v1 in edges:
+    x0,y0,z0 = verts[v0]
+    x1,y1,z1 = verts[v1]
+    print("  <path d=\"M %r,%r L %r,%r\" />"%(y0*scale,-z0*scale,y1*scale,-z1*scale))
+  print(" </g>")
+
+  print(" <g style=\"fill:none;stroke:#000000\" transform=\"translate(384,128)\" >")
+  for x,y,z in verts:
+    print("  <circle cx=\"%r\" cy=\"%r\" r=\"%r\" />"%(x*scale,-z*scale,pointRadius*scale))
+  for v0,v1 in edges:
+    x0,y0,z0 = verts[v0]
+    x1,y1,z1 = verts[v1]
+    print("  <path d=\"M %r,%r L %r,%r\" />"%(x0*scale,-z0*scale,x1*scale,-z1*scale))
+  print(" </g>")
+
   print("</svg>")
 
 
