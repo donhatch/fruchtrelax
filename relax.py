@@ -41,19 +41,45 @@ def relaxOnAnySizeSphere(verts,
     # move it to the average of where they want it to go.
     newVerts = [(0.,0.,0.) for vert in verts]
     nContributions = [0] * len(newVerts)
-    for v0,v1,relation,targetEdgeLength in edgeLengthConstraints:
-      currentEdgeLength = dist(verts[v0],verts[v1])
-      if ((relation=="<=" and currentEdgeLength<targetEdgeLength) or
-          (relation==">=" and currentEdgeLength>targetEdgeLength)):
-        # this spring already satisfies the constraint and it still will if perturbed a little;
-        # so don't contribute anything.
-        continue
-      # this spring wants to change (or keep) its length from currentEdgeLength to targetEdgeLength
-      edgeCenter = lerp(verts[v0],verts[v1],.5)
-      newVerts[v0] = vpv(newVerts[v0], lerp(edgeCenter, verts[v0], targetEdgeLength/currentEdgeLength))
-      newVerts[v1] = vpv(newVerts[v1], lerp(edgeCenter, verts[v1], targetEdgeLength/currentEdgeLength))
-      nContributions[v0] += 1
-      nContributions[v1] += 1
+    for edgeLengthConstraint in edgeLengthConstraints:
+      if len(edgeLengthConstraint) == 4:
+        # This constraint says a spring length must be (==,<=,>=) a given target.
+        v0,v1,relation,targetEdgeLength = edgeLengthConstraint
+        currentEdgeLength = dist(verts[v0],verts[v1])
+        if ((relation=="<=" and currentEdgeLength<targetEdgeLength) or
+            (relation==">=" and currentEdgeLength>targetEdgeLength)):
+          # this spring already satisfies the constraint and it still will if perturbed a little;
+          # so don't contribute anything.
+          continue
+        # this spring wants to change (or keep) its length from currentEdgeLength to targetEdgeLength
+        edgeCenter = lerp(verts[v0],verts[v1],.5)
+        newVerts[v0] = vpv(newVerts[v0], lerp(edgeCenter, verts[v0], targetEdgeLength/currentEdgeLength))
+        newVerts[v1] = vpv(newVerts[v1], lerp(edgeCenter, verts[v1], targetEdgeLength/currentEdgeLength))
+        nContributions[v0] += 1
+        nContributions[v1] += 1
+      else:  # len(edgeLengthConstraint) == 5
+        # This constraint says a spring length must be (==,<=,>=) another.
+        v0,v1,relation,v2,v3 = edgeLengthConstraint
+        currentEdgeLength01 = dist(verts[v0],verts[v1])
+        currentEdgeLength23 = dist(verts[v2],verts[v3])
+        if ((relation=="<=" and currentEdgeLength01<currentEdgeLength23) or
+            (relation==">=" and currentEdgeLength01>currentEdgeLength23)):
+          # this pair of distances already satisfies the constraint and it still will if perturbed a little;
+          # so don't contribute anything.
+          continue
+        # this pair of distances wants to change (or stay) equal to the average of the two distances
+        targetEdgeLength = (currentEdgeLength01 + currentEdgeLength23) * .5
+        edgeCenter01 = lerp(verts[v0],verts[v1],.5)
+        edgeCenter23 = lerp(verts[v2],verts[v3],.5)
+        newVerts[v0] = vpv(newVerts[v0], lerp(edgeCenter01, verts[v0], targetEdgeLength/currentEdgeLength01))
+        newVerts[v1] = vpv(newVerts[v1], lerp(edgeCenter01, verts[v1], targetEdgeLength/currentEdgeLength01))
+        newVerts[v2] = vpv(newVerts[v2], lerp(edgeCenter23, verts[v2], targetEdgeLength/currentEdgeLength23))
+        newVerts[v3] = vpv(newVerts[v3], lerp(edgeCenter23, verts[v3], targetEdgeLength/currentEdgeLength23))
+        nContributions[v0] += 1
+        nContributions[v1] += 1
+        nContributions[v2] += 1
+        nContributions[v3] += 1
+
     for i in range(len(newVerts)):
       if nContributions[i] == 0:
         newVerts[i] = verts[i]
@@ -71,8 +97,13 @@ def relaxOnAnySizeSphere(verts,
   sys.stderr.write("      final verts = %r\n"%(verts,))
   sys.stderr.write("      final radii = %r\n"%([length(vert) for vert in verts]))
   sys.stderr.write("      final spring lengths:\n")
-  for v0,v1,relation,targetEdgeLength in edgeLengthConstraints:
-    sys.stderr.write("          %r %r %s %r: %r\n"%(v0,v1,relation,targetEdgeLength,dist(verts[v0],verts[v1])))
+  for edgeLengthConstraint in edgeLengthConstraints:
+    if len(edgeLengthConstraint) == 4:
+      v0,v1,relation,targetEdgeLength = edgeLengthConstraint
+      sys.stderr.write("          %r %r %s %r: %r\n"%(v0,v1,relation,targetEdgeLength,dist(verts[v0],verts[v1])))
+    else:
+      v0,v1,relation,v2,v3 = edgeLengthConstraint
+      sys.stderr.write("          %r %r %s %r %r: %r %r\n"%(v0,v1,relation,v2,v3,dist(verts[v0],verts[v1]),dist(verts[v2],verts[v3])))
   sys.stderr.write("    out relaxOnAnySizeSphere\n")
   return verts
 
@@ -136,6 +167,17 @@ for line in sys.stdin:
     if relation not in ['==','<=','>=']:
       exit("Bad line %r"%(line,))
     edgeLengthConstraints.append([v0,v1,relation,targetEdgeLength])
+  elif len(tokens) == 5:
+    # it's constraining two edges have to have equal length, e.g.:
+    # 3 6 == 10 11
+    v0 = int(tokens[0])
+    v1 = int(tokens[1])
+    relation = tokens[2]
+    v2 = int(tokens[3])
+    v3 = int(tokens[4])
+    if relation not in ['==','<=','>=']:
+      exit("Bad line %r"%(line,))
+    edgeLengthConstraints.append([v0,v1,relation,v2,v3])
   else:
     exit("bad line %r" % (line,))
 
