@@ -29,7 +29,6 @@
 0 -.5 1
 
 # Edges all want to be exactly 1.
-#0 1 == 1.1755705045847646  # this happens to be the resulting edge length if we relax this edge completely to get the perfectly constrained system
 0 1 == 1
 0 3 == 1
 2 4 == 1
@@ -49,7 +48,7 @@
 9 11 == 1
 10 11 == 1
 
-# (Note, the program currently treats all springs up through
+# (Note, the program currently treats all constraints up through
 # the last "== 1" as edges to be drawn)
 
 # Square diagonals want to be exactly sqrt(2).
