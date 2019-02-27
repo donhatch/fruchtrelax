@@ -9,7 +9,8 @@
 #   rev 0 2019/02/26 donhatch: initial revision
 #   rev 1 2019/02/26 donhatch: changed so edges are drawn up through the last
 #                    "== 1" constraint, instead of only the "== 1" constraints
-
+#   rev 2 2019/02/26 donhatch: recognize edge equality constraints,
+#                    e.g. "0 1 == 1 2" or "3 4 <= 10 11" or "3 4 >= 10 11"
 
 import math
 import re
