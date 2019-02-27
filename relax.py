@@ -3,9 +3,13 @@
 # Try to make a graph satisfy distance constrants (==,<=,>=)
 # among pairs of vertices, while keeping all vertices on a sphere
 # of some radius.
-
+#
 # Author: Don Hatch
-# 2019/02/26
+# Revision history:
+#   rev 0 2019/02/26 donhatch: initial revision
+#   rev 1 2019/02/26 donhatch: changed so edges are drawn up through the last
+#                    "== 1" constraint, instead of only the "== 1" constraints
+
 
 import math
 import re
@@ -138,6 +142,12 @@ for line in sys.stdin:
 
 verts = relaxOnAnySizeSphere(verts, edgeLengthConstraints, nIters)
 
-# Assume the actual edges are the springs with target exactly 1.
-edges = [(v0,v1) for v0,v1,relation,targetEdgeLength in edgeLengthConstraints if relation=="==" and targetEdgeLength==1]
+# Assume the last spring with target exactly 1 is the last edge;
+# so some of the earlier edges may have different experimental constraints.
+# CBB: this is a pretty bogus assumption
+lastEdgeIndex = max(i for i in range(len(edgeLengthConstraints)) if edgeLengthConstraints[i][2]=="==" and edgeLengthConstraints[i][3]==1.)
+edges = [(edgeLengthConstraints[i][0],edgeLengthConstraints[i][1]) for i in range(lastEdgeIndex+1)]
+
 printSVG(verts, edges)
+
+
